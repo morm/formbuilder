@@ -72,18 +72,29 @@ class EditFieldView extends Backbone.View
   className: "edit-response-field"
 
   events:
-    'click .js-add-option': 'addOption'
-    'click .js-remove-option': 'removeOption'
-    'click .js-default-updated': 'defaultUpdated'
-    'input .option-label-input': 'forceRender'
+    'click .js-add-option'      : 'addOption'
+    'click .js-remove-option'   : 'removeOption'
+    'click .js-default-updated' : 'defaultUpdated'
+    'click .js-trigger-group'   : 'triggerGroup'
+    'input .option-label-input' : 'forceRender'
 
   initialize: (options) ->
     {@parentView} = options
     @listenTo @model, "destroy", @remove
-
+  fn: (event, ui)->#not lambda for debug only
+    $('.ui-autocomplete-input').change()
   render: ->
     @$el.html(Formbuilder.templates["edit/base#{if !@model.is_input() then '_non_input' else ''}"]({rf: @model}))
     rivets.bind @$el, { model: @model }
+    @$( "#grName" ).autocomplete({
+        source: @parentView.groups,
+        minLength: 0,
+        close: @fn
+    }).focus(->
+      $(this).autocomplete 'search'
+      @)
+
+    @$("#grName").attr('autocomplete', 'on');
     return @
 
   remove: ->
@@ -127,6 +138,11 @@ class EditFieldView extends Backbone.View
   forceRender: ->
     @model.trigger('change')
 
+  triggerGroup: ->
+    options = _.pluck(@model.collection.models, 'attributes')
+    options = _.pluck(options, 'group')
+    options = _.uniq(_.compact(options))
+    @forceRender()
 
 class BuilderView extends Backbone.View
   SUBVIEWS: []
@@ -139,7 +155,7 @@ class BuilderView extends Backbone.View
     'mouseout .fb-add-field-types': 'unlockLeftWrapper'
 
   initialize: (options) ->
-    {selector, @formBuilder, @bootstrapData} = options
+    {selector, @formBuilder, @groups, @bootstrapData} = options
 
     # This is a terrible idea because it's not scoped to this view.
     if selector?
@@ -332,7 +348,7 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
     @collection.sort()
-    payload = JSON.stringify fields: @collection.toJSON()
+    payload = JSON.stringify({fields: @collection.toJSON(), groups: @groups})
 
     if Formbuilder.options.HTTP_ENDPOINT then @doAjaxSave(payload)
     @formBuilder.trigger 'save', payload
@@ -375,27 +391,28 @@ class Formbuilder
     CLEAR_FIELD_CONFIRM: false
 
     mappings:
-      SIZE: 'field_options.size'
-      UNITS: 'field_options.units'
-      LABEL: 'label'
-      FIELD_TYPE: 'field_type'
-      REQUIRED: 'required'
-      ADMIN_ONLY: 'admin_only'
-      OPTIONS: 'field_options.options'
-      DESCRIPTION: 'field_options.description'
-      INCLUDE_OTHER: 'field_options.include_other_option'
-      INCLUDE_BLANK: 'field_options.include_blank_option'
-      INTEGER_ONLY: 'field_options.integer_only'
-      MIN: 'field_options.min'
-      MAX: 'field_options.max'
-      MINLENGTH: 'field_options.minlength'
-      MAXLENGTH: 'field_options.maxlength'
-      LENGTH_UNITS: 'field_options.min_max_length_units'
+      GROUP:          'group'
+      SIZE:           'field_options.size'
+      UNITS:          'field_options.units'
+      LABEL:          'label'
+      FIELD_TYPE:     'field_type'
+      REQUIRED:       'required'
+      ADMIN_ONLY:     'admin_only'
+      OPTIONS:        'field_options.options'
+      DESCRIPTION:    'field_options.description'
+      INCLUDE_OTHER:  'field_options.include_other_option'
+      INCLUDE_BLANK:  'field_options.include_blank_option'
+      INTEGER_ONLY:   'field_options.integer_only'
+      MIN:            'field_options.min'
+      MAX:            'field_options.max'
+      MINLENGTH:      'field_options.minlength'
+      MAXLENGTH:      'field_options.maxlength'
+      LENGTH_UNITS:   'field_options.min_max_length_units'
 
     dict:
-      ALL_CHANGES_SAVED: 'All changes saved'
-      SAVE_FORM: 'Save form'
-      UNSAVED_CHANGES: 'You have unsaved changes. If you leave this page, you will lose those changes!'
+      ALL_CHANGES_SAVED:  'All changes saved'
+      SAVE_FORM:          'Save form'
+      UNSAVED_CHANGES:    'You have unsaved changes. If you leave this page, you will lose those changes!'
 
   @fields: {}
   @inputFields: {}

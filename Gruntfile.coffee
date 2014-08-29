@@ -65,6 +65,9 @@ module.exports = (grunt) ->
             'bower_components/jquery-ui/ui/jquery.ui.draggable.js'
             'bower_components/jquery-ui/ui/jquery.ui.droppable.js'
             'bower_components/jquery-ui/ui/jquery.ui.sortable.js'
+            'bower_components/jquery-ui/ui/jquery.ui.position.js '
+            'bower_components/jquery-ui/ui/jquery.ui.menu.js'
+            'bower_components/jquery-ui/ui/jquery.ui.autocomplete.js'
             'bower_components/jquery.scrollWindowTo/index.js'
             'bower_components/underscore/underscore-min.js'
             'bower_components/underscore.mixin.deepExtend/index.js'
@@ -86,14 +89,14 @@ module.exports = (grunt) ->
     cssmin:
       dist:
         files:
-          '<%= distFolder %>/formbuilder-min.css': '<%= distFolder %>/formbuilder.css'
-          '<%= vendorFolder %>/css/vendor.css': 'bower_components/font-awesome/css/font-awesome.css'
+          '<%= distFolder %>/formbuilder-min.css': ['<%= distFolder %>/formbuilder.css', 'bower_components/jquery-ui/themes/base/jquery-ui.css']
+          '<%= vendorFolder %>/css/vendor.css'   : 'bower_components/font-awesome/css/font-awesome.css'
 
     stylus:
       all:
         files:
           '<%= compiledFolder %>/formbuilder.css': '<%= srcFolder %>/styles/**.styl'
-          '<%= distFolder %>/formbuilder.css': '<%= compiledFolder %>/**/*.css'
+          '<%= distFolder %>/formbuilder.css'    : '<%= compiledFolder %>/**/*.css'
 
     clean:
       compiled:

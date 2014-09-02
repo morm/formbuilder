@@ -182,12 +182,17 @@
       'click .js-add-option': 'addOption',
       'click .js-remove-option': 'removeOption',
       'click .js-default-updated': 'defaultUpdated',
+      'click .js-trigger-group': 'triggerGroup',
       'input .option-label-input': 'forceRender'
     };
 
     EditFieldView.prototype.initialize = function(options) {
       this.parentView = options.parentView;
       return this.listenTo(this.model, "destroy", this.remove);
+    };
+
+    EditFieldView.prototype.onDropboxClose = function(event, ui) {
+      return $('.ui-autocomplete-input').change();
     };
 
     EditFieldView.prototype.render = function() {
@@ -197,10 +202,20 @@
       rivets.bind(this.$el, {
         model: this.model
       });
+      this.$("#grName").autocomplete({
+        source: this.getGroups(),
+        minLength: 0,
+        close: this.onDropboxClose
+      }).focus(function() {
+        $(this).autocomplete('search');
+        return this;
+      });
+      this.$("#grName").attr('autocomplete', 'on');
       return this;
     };
 
     EditFieldView.prototype.remove = function() {
+      this.onDropboxClose();
       this.parentView.editView = void 0;
       this.parentView.$el.find("[data-target=\"#addField\"]").click();
       return EditFieldView.__super__.remove.apply(this, arguments);
@@ -249,6 +264,54 @@
       return this.model.trigger('change');
     };
 
+    EditFieldView.prototype.getGroups = function() {
+      var options;
+      options = _.pluck(this.model.collection.models, 'attributes');
+      options = _.pluck(options, 'group');
+      return options = _.uniq(_.compact(options));
+    };
+
+    EditFieldView.prototype.triggerGroup = function(e) {
+      var $el, a, b, fn, i, options,
+        _this = this;
+      a = $("#dialog");
+      b = a.find("#grNameDialog");
+      options = this.model.get(Formbuilder.options.mappings.OPTIONS);
+      $el = $(e.currentTarget);
+      i = this.$el.find('.option').index($el.closest('.option'));
+      fn = (function(i, options) {
+        return function() {
+          $('.ui-autocomplete-input').change();
+          $("#dialog").dialog("close");
+          if (i > -1) {
+            options[i].tr_group = b.val();
+            return b.val('');
+          }
+        };
+      })(i, options);
+      b.autocomplete({
+        source: this.getGroups(),
+        minLength: 0,
+        close: function() {
+          return fn();
+        }
+      }).focus(function() {
+        $(this).autocomplete('search');
+        return this;
+      });
+      a.position({
+        my: "center",
+        at: "center"
+      });
+      b.position({
+        my: "center",
+        at: "center"
+      });
+      a.dialog("open");
+      b.attr('autocomplete', 'on');
+      return this.forceRender();
+    };
+
     return EditFieldView;
 
   })(Backbone.View);
@@ -273,7 +336,7 @@
 
     BuilderView.prototype.initialize = function(options) {
       var selector;
-      selector = options.selector, this.formBuilder = options.formBuilder, this.bootstrapData = options.bootstrapData;
+      selector = options.selector, this.formBuilder = options.formBuilder, this.groups = options.groups, this.bootstrapData = options.bootstrapData;
       if (selector != null) {
         this.setElement($(selector));
       }
@@ -315,6 +378,11 @@
     BuilderView.prototype.render = function() {
       var subview, _i, _len, _ref5;
       this.$el.html(Formbuilder.templates['page']());
+      $("#dialog").dialog({
+        autoOpen: false,
+        modal: true,
+        minHeight: 230
+      });
       this.$fbLeft = this.$el.find('.fb-left');
       this.$responseFields = this.$el.find('.fb-response-fields');
       this.bindWindowScrollEvent();
@@ -572,6 +640,7 @@
       AUTOSAVE: true,
       CLEAR_FIELD_CONFIRM: false,
       mappings: {
+        GROUP: 'group',
         SIZE: 'field_options.size',
         UNITS: 'field_options.units',
         LABEL: 'label',
@@ -894,7 +963,21 @@ __p += '<div class=\'fb-edit-section-header\'>Label</div>\n\n<div class=\'fb-com
 ((__t = ( Formbuilder.templates['edit/label_description']() )) == null ? '' : __t) +
 '\n  </div>\n  <div class=\'fb-common-checkboxes\'>\n    ' +
 ((__t = ( Formbuilder.templates['edit/checkboxes']() )) == null ? '' : __t) +
+'\n  </div>\n  <div class=\'fb-common-group\'>\n    ' +
+((__t = ( Formbuilder.templates['edit/dropdown']() )) == null ? '' : __t) +
 '\n  </div>\n  <div class=\'fb-clear\'></div>\n</div>\n';
+
+}
+return __p
+};
+
+this["Formbuilder"]["templates"]["edit/dropdown"] = function(obj) {
+obj || (obj = {});
+var __t, __p = '', __e = _.escape;
+with (obj) {
+__p += '<label>\r\n\tGroup name\r\n\t<div id="formWrap">\r\n\t    <input id="grName" data-rv-value="model.' +
+((__t = ( Formbuilder.options.mappings.GROUP )) == null ? '' : __t) +
+'">\r\n\t</div>\r\n</label>';
 
 }
 return __p
@@ -969,11 +1052,13 @@ __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
  } ;
 __p += '\n\n<div class=\'option\' data-rv-each-option=\'model.' +
 ((__t = ( Formbuilder.options.mappings.OPTIONS )) == null ? '' : __t) +
-'\'>\n  <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked" />\n  <input type="text" data-rv-input="option:label" class=\'option-label-input\' />\n  <a class="js-add-option ' +
+'\'>\n  <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked" />\n  <input type="text" data-rv-input="option:label" class=\'option-label-input\' />\n  <a class="js-add-option    ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Add Option"><i class=\'fa fa-plus-circle\'></i></a>\n  <a class="js-remove-option ' +
+'" title="Add Option">   <i class=\'fa fa-plus-circle\'> </i></a>\n  <a class="js-remove-option ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n</div>\n\n';
+'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n  <a class="js-trigger-group ' +
+((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
+'" title="Trigger group"><i class=\'fa fa-question\'>    </i></a>\n</div>\n\n';
  if (typeof includeOther !== 'undefined'){ ;
 __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.INCLUDE_OTHER )) == null ? '' : __t) +
@@ -1021,6 +1106,8 @@ __p +=
 ((__t = ( Formbuilder.templates['partials/left_side']() )) == null ? '' : __t) +
 '\n' +
 ((__t = ( Formbuilder.templates['partials/right_side']() )) == null ? '' : __t) +
+'\n' +
+((__t = ( Formbuilder.templates['partials/dialog']() )) == null ? '' : __t) +
 '\n<div class=\'fb-clear\'></div>';
 
 }
@@ -1053,6 +1140,16 @@ __p += '\n        <a data-field-type="' +
 '\n        </a>\n      ';
  }); ;
 __p += '\n    </div -->\n  </div>\n</div>';
+
+}
+return __p
+};
+
+this["Formbuilder"]["templates"]["partials/dialog"] = function(obj) {
+obj || (obj = {});
+var __t, __p = '', __e = _.escape;
+with (obj) {
+__p += '<form>\r\n<div id="dialog" class="ef-group-dialog" title="Choose group to trigger with this option">\r\n\t<input id="grNameDialog" readonly="readonly">\r\n</div>\r\n</form>';
 
 }
 return __p

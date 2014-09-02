@@ -81,15 +81,17 @@ class EditFieldView extends Backbone.View
   initialize: (options) ->
     {@parentView} = options
     @listenTo @model, "destroy", @remove
-  fn: (event, ui)->#not lambda for debug only
+
+  onDropboxClose: (event, ui)->
     $('.ui-autocomplete-input').change()
+  
   render: ->
     @$el.html(Formbuilder.templates["edit/base#{if !@model.is_input() then '_non_input' else ''}"]({rf: @model}))
     rivets.bind @$el, { model: @model }
     @$( "#grName" ).autocomplete({
-        source: @parentView.groups,
+        source: @getGroups(),
         minLength: 0,
-        close: @fn
+        close: @onDropboxClose
     }).focus(->
       $(this).autocomplete 'search'
       @)
@@ -98,6 +100,7 @@ class EditFieldView extends Backbone.View
     return @
 
   remove: ->
+    @onDropboxClose()
     @parentView.editView = undefined
     @parentView.$el.find("[data-target=\"#addField\"]").click()
     super
@@ -138,10 +141,39 @@ class EditFieldView extends Backbone.View
   forceRender: ->
     @model.trigger('change')
 
-  triggerGroup: ->
+  getGroups: ->
     options = _.pluck(@model.collection.models, 'attributes')
     options = _.pluck(options, 'group')
     options = _.uniq(_.compact(options))
+
+  triggerGroup: (e) ->
+    a = $( "#dialog" )
+    b = a.find( "#grNameDialog" )
+
+    options=@model.get Formbuilder.options.mappings.OPTIONS
+    $el = $(e.currentTarget)
+    i = @$el.find('.option').index($el.closest('.option'))
+
+    fn = do (i, options ) -> ->
+      $('.ui-autocomplete-input').change()
+      $( "#dialog" ).dialog("close")
+      if i > -1
+        options[i].tr_group = b.val()
+        b.val ''
+
+    b.autocomplete({
+        source: @getGroups(),
+        minLength: 0,
+        close: => fn()
+    }).focus(->
+      $(this).autocomplete 'search'
+      @)
+    a.position(my:"center", at:"center")
+    b.position(my:"center", at:"center")
+
+    a.dialog( "open" )
+    b.attr('autocomplete','on')
+
     @forceRender()
 
 class BuilderView extends Backbone.View
@@ -192,7 +224,7 @@ class BuilderView extends Backbone.View
 
   render: ->
     @$el.html Formbuilder.templates['page']()
-
+    $( "#dialog" ).dialog({ autoOpen: false, modal: true, minHeight: 230 });
     # Save jQuery objects for easy use
     @$fbLeft = @$el.find('.fb-left')
     @$responseFields = @$el.find('.fb-response-fields')
@@ -348,7 +380,7 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
     @collection.sort()
-    payload = JSON.stringify({fields: @collection.toJSON(), groups: @groups})
+    payload = JSON.stringify(fields: @collection.toJSON())
 
     if Formbuilder.options.HTTP_ENDPOINT then @doAjaxSave(payload)
     @formBuilder.trigger 'save', payload

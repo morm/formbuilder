@@ -75,7 +75,7 @@ class EditFieldView extends Backbone.View
     'click .js-add-option'      : 'addOption'
     'click .js-remove-option'   : 'removeOption'
     'click .js-default-updated' : 'defaultUpdated'
-    'click .js-trigger-group'   : 'triggerGroup'
+    'focus #grNameDialog'       : 'triggerGroup'
     'input .option-label-input' : 'forceRender'
 
   initialize: (options) ->
@@ -147,8 +147,7 @@ class EditFieldView extends Backbone.View
     options = _.uniq(_.compact(options))
 
   triggerGroup: (e) ->
-    a = $( "#dialog" )
-    b = a.find( "#grNameDialog" )
+    b = $(e.currentTarget)
 
     options=@model.get Formbuilder.options.mappings.OPTIONS
     $el = $(e.currentTarget)
@@ -156,22 +155,18 @@ class EditFieldView extends Backbone.View
 
     fn = do (i, options ) -> ->
       $('.ui-autocomplete-input').change()
-      $( "#dialog" ).dialog("close")
       if i > -1
         options[i].tr_group = b.val()
-        b.val ''
 
     b.autocomplete({
         source: @getGroups(),
         minLength: 0,
         close: => fn()
     }).focus(->
+      $(this).val ''
       $(this).autocomplete 'search'
       @)
-    a.position(my:"center", at:"center")
-    b.position(my:"center", at:"center")
 
-    a.dialog( "open" )
     b.attr('autocomplete','on')
 
     @forceRender()
@@ -224,7 +219,6 @@ class BuilderView extends Backbone.View
 
   render: ->
     @$el.html Formbuilder.templates['page']()
-    $( "#dialog" ).dialog({ autoOpen: false, modal: true, minHeight: 230 });
     # Save jQuery objects for easy use
     @$fbLeft = @$el.find('.fb-left')
     @$responseFields = @$el.find('.fb-response-fields')

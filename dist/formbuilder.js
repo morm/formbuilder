@@ -182,7 +182,7 @@
       'click .js-add-option': 'addOption',
       'click .js-remove-option': 'removeOption',
       'click .js-default-updated': 'defaultUpdated',
-      'click .js-trigger-group': 'triggerGroup',
+      'focus #grNameDialog': 'triggerGroup',
       'input .option-label-input': 'forceRender'
     };
 
@@ -272,20 +272,17 @@
     };
 
     EditFieldView.prototype.triggerGroup = function(e) {
-      var $el, a, b, fn, i, options,
+      var $el, b, fn, i, options,
         _this = this;
-      a = $("#dialog");
-      b = a.find("#grNameDialog");
+      b = $(e.currentTarget);
       options = this.model.get(Formbuilder.options.mappings.OPTIONS);
       $el = $(e.currentTarget);
       i = this.$el.find('.option').index($el.closest('.option'));
       fn = (function(i, options) {
         return function() {
           $('.ui-autocomplete-input').change();
-          $("#dialog").dialog("close");
           if (i > -1) {
-            options[i].tr_group = b.val();
-            return b.val('');
+            return options[i].tr_group = b.val();
           }
         };
       })(i, options);
@@ -296,18 +293,10 @@
           return fn();
         }
       }).focus(function() {
+        $(this).val('');
         $(this).autocomplete('search');
         return this;
       });
-      a.position({
-        my: "center",
-        at: "center"
-      });
-      b.position({
-        my: "center",
-        at: "center"
-      });
-      a.dialog("open");
       b.attr('autocomplete', 'on');
       return this.forceRender();
     };
@@ -378,11 +367,6 @@
     BuilderView.prototype.render = function() {
       var subview, _i, _len, _ref5;
       this.$el.html(Formbuilder.templates['page']());
-      $("#dialog").dialog({
-        autoOpen: false,
-        modal: true,
-        minHeight: 230
-      });
       this.$fbLeft = this.$el.find('.fb-left');
       this.$responseFields = this.$el.find('.fb-response-fields');
       this.bindWindowScrollEvent();
@@ -1056,9 +1040,7 @@ __p += '\n\n<div class=\'option\' data-rv-each-option=\'model.' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
 '" title="Add Option">   <i class=\'fa fa-plus-circle\'> </i></a>\n  <a class="js-remove-option ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n  <a class="js-trigger-group ' +
-((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Trigger group"><i class=\'fa fa-question\'>    </i></a>\n</div>\n\n';
+'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n  <div>Tr. gr.<input id="grNameDialog" readonly="readonly"/></div>\n</div>\n\n';
  if (typeof includeOther !== 'undefined'){ ;
 __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.INCLUDE_OTHER )) == null ? '' : __t) +
@@ -1106,8 +1088,6 @@ __p +=
 ((__t = ( Formbuilder.templates['partials/left_side']() )) == null ? '' : __t) +
 '\n' +
 ((__t = ( Formbuilder.templates['partials/right_side']() )) == null ? '' : __t) +
-'\n' +
-((__t = ( Formbuilder.templates['partials/dialog']() )) == null ? '' : __t) +
 '\n<div class=\'fb-clear\'></div>';
 
 }
@@ -1140,16 +1120,6 @@ __p += '\n        <a data-field-type="' +
 '\n        </a>\n      ';
  }); ;
 __p += '\n    </div -->\n  </div>\n</div>';
-
-}
-return __p
-};
-
-this["Formbuilder"]["templates"]["partials/dialog"] = function(obj) {
-obj || (obj = {});
-var __t, __p = '', __e = _.escape;
-with (obj) {
-__p += '<form>\r\n<div id="dialog" class="ef-group-dialog" title="Choose group to trigger with this option">\r\n\t<input id="grNameDialog" readonly="readonly">\r\n</div>\r\n</form>';
 
 }
 return __p

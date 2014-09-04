@@ -293,7 +293,7 @@
           return fn();
         }
       }).focus(function() {
-        $(this).val('');
+        $(this).val;
         $(this).autocomplete('search');
         return this;
       });

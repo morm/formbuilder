@@ -163,7 +163,7 @@ class EditFieldView extends Backbone.View
         minLength: 0,
         close: => fn()
     }).focus(->
-      $(this).val ''
+      $(this).val 
       $(this).autocomplete 'search'
       @)
 

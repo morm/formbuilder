@@ -10,7 +10,7 @@ module.exports = (config) ->
             # Dependencies.
             'vendor/js/vendor.js'
 
-            'dist/formbuilder-min.js'
+            'dist/formbuilder.js'
 
             'test/vendor/js/chai.js'
             'test/vendor/js/sinon.js'
@@ -47,11 +47,11 @@ module.exports = (config) ->
         # - Opera
         # - Safari
         # - PhantomJS
-        browsers: ['PhantomJS']
+        browsers: ['Chrome']
 
         # Continuous Integration mode
         # if true, it capture browsers, run tests and exit
-        # singleRun: yes
+        singleRun: yes
 
         # compile coffee scripts
         preprocessors: '**/*.coffee': 'coffee'

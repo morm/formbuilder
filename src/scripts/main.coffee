@@ -67,7 +67,21 @@ class ViewFieldView extends Backbone.View
     attrs['label'] += ' Copy'
     @parentView.createField attrs, { position: @model.indexInDOM() + 1 }
 
-
+class FormPropertiesView extends Backbone.View
+  className: "form-properties-field"
+  events:
+    'input .form-name-input' : 'forceRender'
+  initialize: (options) ->
+    {@parentView} = options
+    @el = $('.fb-form-props');
+    @_ensureElement();
+  render: ->
+    rivets.bind @$el, { model: @model }
+    @
+  forceRender: ->
+    @model.trigger('change')
+    @parentView.saveForm()
+    
 class EditFieldView extends Backbone.View
   className: "edit-response-field"
 
@@ -182,8 +196,8 @@ class BuilderView extends Backbone.View
     'mouseout .fb-add-field-types': 'unlockLeftWrapper'
 
   initialize: (options) ->
-    {selector, @formBuilder, @groups, @bootstrapData} = options
-
+    {selector, @formBuilder, @bootstrapData, @form_name, @url} = options
+    @SUBVIEWS.push FormPropertiesView
     # This is a terrible idea because it's not scoped to this view.
     if selector?
       @setElement $(selector)
@@ -195,9 +209,14 @@ class BuilderView extends Backbone.View
     @collection.bind 'change', @handleFormUpdate, @
     @collection.bind 'destroy add reset', @hideShowNoResponseFields, @
     @collection.bind 'destroy', @ensureEditViewScrolled, @
-
+    
+    @form_model = new FormbuilderModel({form_name:@form_name})
+    
     @render()
     @collection.reset(@bootstrapData)
+    # Render any subviews (this is an easy way of extending the Formbuilder)
+    new subview({parentView: @, model: @form_model}).render() for subview in @SUBVIEWS
+
     @bindSaveEvent()
 
   bindSaveEvent: ->
@@ -225,10 +244,7 @@ class BuilderView extends Backbone.View
 
     @bindWindowScrollEvent()
     @hideShowNoResponseFields()
-
-    # Render any subviews (this is an easy way of extending the Formbuilder)
-    new subview({parentView: @}).render() for subview in @SUBVIEWS
-
+    
     return @
 
   bindWindowScrollEvent: ->
@@ -374,8 +390,8 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
     @collection.sort()
-    payload = JSON.stringify(fields: @collection.toJSON())
-
+    
+    payload = JSON.stringify($.extend({bootstrapData: @collection.toJSON()},@form_model.toJSON()))
     if Formbuilder.options.HTTP_ENDPOINT then @doAjaxSave(payload)
     @formBuilder.trigger 'save', payload
 
@@ -384,7 +400,9 @@ class BuilderView extends Backbone.View
       url: Formbuilder.options.HTTP_ENDPOINT
       type: Formbuilder.options.HTTP_METHOD
       data: payload
+      dataType: 'json'
       contentType: "application/json"
+      mimeType: 'application/json'
       success: (data) =>
         @updatingBatch = true
 
@@ -460,6 +478,7 @@ class Formbuilder
   constructor: (opts={}) ->
     _.extend @, Backbone.Events
     args = _.extend opts, {formBuilder: @}
+    Formbuilder.options.HTTP_ENDPOINT = opts.url
     @mainView = new BuilderView args
 
 window.Formbuilder = Formbuilder

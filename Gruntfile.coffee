@@ -1,4 +1,4 @@
-ALL_TASKS = ['jst:all', 'coffee:all', 'concat:all', 'stylus:all', 'clean:compiled']
+ALL_TASKS = ['jst:all', 'coffee:all', 'concat:all', 'stylus:all', 'uglify:dist','cssmin:dist', 'clean:compiled']
 
 # formbuilder.js must be compiled in this order:
 # 1. rivets-config
@@ -72,6 +72,7 @@ module.exports = (grunt) ->
             'bower_components/jquery-ui/ui/jquery.ui.mouse.js'
             'bower_components/jquery-ui/ui/jquery.ui.resizable.js'
             'bower_components/jquery-ui/ui/jquery.ui.dialog.js'
+            'bower_components/jquery-ui/ui/jquery.ui.tooltip.js'
             'bower_components/jquery.scrollWindowTo/index.js'
             'bower_components/underscore/underscore-min.js'
             'bower_components/underscore.mixin.deepExtend/index.js'

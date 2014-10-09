@@ -41,7 +41,7 @@
 }).call(this);
 
 (function() {
-  var BuilderView, EditFieldView, Formbuilder, FormbuilderCollection, FormbuilderModel, ViewFieldView, _ref, _ref1, _ref2, _ref3, _ref4,
+  var BuilderView, EditFieldView, FormPropertiesView, Formbuilder, FormbuilderCollection, FormbuilderModel, ViewFieldView, _ref, _ref1, _ref2, _ref3, _ref4, _ref5,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -168,12 +168,48 @@
 
   })(Backbone.View);
 
+  FormPropertiesView = (function(_super) {
+    __extends(FormPropertiesView, _super);
+
+    function FormPropertiesView() {
+      _ref3 = FormPropertiesView.__super__.constructor.apply(this, arguments);
+      return _ref3;
+    }
+
+    FormPropertiesView.prototype.className = "form-properties-field";
+
+    FormPropertiesView.prototype.events = {
+      'input .form-name-input': 'forceRender'
+    };
+
+    FormPropertiesView.prototype.initialize = function(options) {
+      this.parentView = options.parentView;
+      this.el = $('.fb-form-props');
+      return this._ensureElement();
+    };
+
+    FormPropertiesView.prototype.render = function() {
+      rivets.bind(this.$el, {
+        model: this.model
+      });
+      return this;
+    };
+
+    FormPropertiesView.prototype.forceRender = function() {
+      this.model.trigger('change');
+      return this.parentView.saveForm();
+    };
+
+    return FormPropertiesView;
+
+  })(Backbone.View);
+
   EditFieldView = (function(_super) {
     __extends(EditFieldView, _super);
 
     function EditFieldView() {
-      _ref3 = EditFieldView.__super__.constructor.apply(this, arguments);
-      return _ref3;
+      _ref4 = EditFieldView.__super__.constructor.apply(this, arguments);
+      return _ref4;
     }
 
     EditFieldView.prototype.className = "edit-response-field";
@@ -211,6 +247,15 @@
         return this;
       });
       this.$("#grName").attr('autocomplete', 'on');
+      this.$("#D4W_data").autocomplete({
+        source: "getFieldsList",
+        minLength: 0,
+        close: this.onDropboxClose
+      }).focus(function() {
+        $(this).autocomplete('search');
+        return this;
+      });
+      this.$("#D4W_data").attr('autocomplete', 'on');
       return this;
     };
 
@@ -309,8 +354,8 @@
     __extends(BuilderView, _super);
 
     function BuilderView() {
-      _ref4 = BuilderView.__super__.constructor.apply(this, arguments);
-      return _ref4;
+      _ref5 = BuilderView.__super__.constructor.apply(this, arguments);
+      return _ref5;
     }
 
     BuilderView.prototype.SUBVIEWS = [];
@@ -324,8 +369,9 @@
     };
 
     BuilderView.prototype.initialize = function(options) {
-      var selector;
-      selector = options.selector, this.formBuilder = options.formBuilder, this.groups = options.groups, this.bootstrapData = options.bootstrapData;
+      var selector, subview, _i, _len, _ref6;
+      selector = options.selector, this.formBuilder = options.formBuilder, this.bootstrapData = options.bootstrapData, this.form_name = options.form_name, this.url = options.url;
+      this.SUBVIEWS.push(FormPropertiesView);
       if (selector != null) {
         this.setElement($(selector));
       }
@@ -335,8 +381,19 @@
       this.collection.bind('change', this.handleFormUpdate, this);
       this.collection.bind('destroy add reset', this.hideShowNoResponseFields, this);
       this.collection.bind('destroy', this.ensureEditViewScrolled, this);
+      this.form_model = new FormbuilderModel({
+        form_name: this.form_name
+      });
       this.render();
       this.collection.reset(this.bootstrapData);
+      _ref6 = this.SUBVIEWS;
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        subview = _ref6[_i];
+        new subview({
+          parentView: this,
+          model: this.form_model
+        }).render();
+      }
       return this.bindSaveEvent();
     };
 
@@ -365,19 +422,11 @@
     };
 
     BuilderView.prototype.render = function() {
-      var subview, _i, _len, _ref5;
       this.$el.html(Formbuilder.templates['page']());
       this.$fbLeft = this.$el.find('.fb-left');
       this.$responseFields = this.$el.find('.fb-response-fields');
       this.bindWindowScrollEvent();
       this.hideShowNoResponseFields();
-      _ref5 = this.SUBVIEWS;
-      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-        subview = _ref5[_i];
-        new subview({
-          parentView: this
-        }).render();
-      }
       return this;
     };
 
@@ -564,9 +613,9 @@
       this.formSaved = true;
       this.saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED);
       this.collection.sort();
-      payload = JSON.stringify({
-        fields: this.collection.toJSON()
-      });
+      payload = JSON.stringify($.extend({
+        bootstrapData: this.collection.toJSON()
+      }, this.form_model.toJSON()));
       if (Formbuilder.options.HTTP_ENDPOINT) {
         this.doAjaxSave(payload);
       }
@@ -579,14 +628,16 @@
         url: Formbuilder.options.HTTP_ENDPOINT,
         type: Formbuilder.options.HTTP_METHOD,
         data: payload,
+        dataType: 'json',
         contentType: "application/json",
+        mimeType: 'application/json',
         success: function(data) {
-          var datum, _i, _len, _ref5;
+          var datum, _i, _len, _ref6;
           _this.updatingBatch = true;
           for (_i = 0, _len = data.length; _i < _len; _i++) {
             datum = data[_i];
-            if ((_ref5 = _this.collection.get(datum.cid)) != null) {
-              _ref5.set({
+            if ((_ref6 = _this.collection.get(datum.cid)) != null) {
+              _ref6.set({
                 id: datum.id
               });
             }
@@ -656,10 +707,10 @@
     Formbuilder.nonInputFields = {};
 
     Formbuilder.registerField = function(name, opts) {
-      var x, _i, _len, _ref5;
-      _ref5 = ['view', 'edit'];
-      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-        x = _ref5[_i];
+      var x, _i, _len, _ref6;
+      _ref6 = ['view', 'edit'];
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        x = _ref6[_i];
         opts[x] = _.template(opts[x]);
       }
       opts.field_type = name;
@@ -680,7 +731,9 @@
       args = _.extend(opts, {
         formBuilder: this
       });
+      Formbuilder.options.HTTP_ENDPOINT = opts.url;
       this.mainView = new BuilderView(args);
+      $(document).tooltip();
     }
 
     return Formbuilder;
@@ -925,6 +978,16 @@ __p +=
 return __p
 };
 
+this["Formbuilder"]["templates"]["edit/bind_combobox"] = function(obj) {
+obj || (obj = {});
+var __t, __p = '', __e = _.escape;
+with (obj) {
+__p += '<label>\r\n<input id="D4W_data" readonly="readonly" title="D4W field binding" placeholder="D4W field binding"/>\r\n</label>';
+
+}
+return __p
+};
+
 this["Formbuilder"]["templates"]["edit/checkboxes"] = function(obj) {
 obj || (obj = {});
 var __t, __p = '', __e = _.escape;
@@ -947,6 +1010,8 @@ __p += '<div class=\'fb-edit-section-header\'>Label</div>\n\n<div class=\'fb-com
 ((__t = ( Formbuilder.templates['edit/label_description']() )) == null ? '' : __t) +
 '\n  </div>\n  <div class=\'fb-common-checkboxes\'>\n    ' +
 ((__t = ( Formbuilder.templates['edit/checkboxes']() )) == null ? '' : __t) +
+'\n  </div>\n  <div class=\'fb-common-binder\'>\n    ' +
+((__t = ( Formbuilder.templates['edit/bind_combobox']() )) == null ? '' : __t) +
 '\n  </div>\n  <div class=\'fb-common-group\'>\n    ' +
 ((__t = ( Formbuilder.templates['edit/dropdown']() )) == null ? '' : __t) +
 '\n  </div>\n  <div class=\'fb-clear\'></div>\n</div>\n';
@@ -959,9 +1024,9 @@ this["Formbuilder"]["templates"]["edit/dropdown"] = function(obj) {
 obj || (obj = {});
 var __t, __p = '', __e = _.escape;
 with (obj) {
-__p += '<label>\r\n\tGroup name\r\n\t<div id="formWrap">\r\n\t    <input id="grName" data-rv-value="model.' +
+__p += '<label>\r\n\t<div id="formWrap">\r\n\t    <input id="grName" data-rv-value="model.' +
 ((__t = ( Formbuilder.options.mappings.GROUP )) == null ? '' : __t) +
-'">\r\n\t</div>\r\n</label>';
+'" title="Group name" placeholder="Group name">\r\n\t</div>\r\n</label>';
 
 }
 return __p
@@ -1034,13 +1099,13 @@ __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.INCLUDE_BLANK )) == null ? '' : __t) +
 '\' />\n    Include blank\n  </label>\n';
  } ;
-__p += '\n\n<div class=\'option\' data-rv-each-option=\'model.' +
+__p += '\n<div class=\'option\' data-rv-each-option=\'model.' +
 ((__t = ( Formbuilder.options.mappings.OPTIONS )) == null ? '' : __t) +
-'\'>\n  <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked" />\n  <input type="text" data-rv-input="option:label" class=\'option-label-input\' />\n  <a class="js-add-option    ' +
+'\'>\n<fieldset style="border: 1px solid #ddd; margin-bottom: 3px; padding: 3px">\n  <div style="display: inline; float: left; margin-bottom: 50px; padding: 3px">\n    <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked"/>\n  </div>\n  <div style="display: inline; padding: 3px">\n    <input type="text" data-rv-input="option:label" class=\'option-label-input\' />\n    <a class="js-add-option    ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Add Option">   <i class=\'fa fa-plus-circle\'> </i></a>\n  <a class="js-remove-option ' +
+'" title="Add Option">   <i class=\'fa fa-plus-circle\'> </i></a>\n    <a class="js-remove-option ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n  <div>Tr. gr.<input id="grNameDialog" readonly="readonly"/></div>\n</div>\n\n';
+'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n\n    <input id="grNameDialog" readonly="readonly" placeholder="Toggle group"/>\n  </div>\n</fieldset>\n\n</div>\n\n';
  if (typeof includeOther !== 'undefined'){ ;
 __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.INCLUDE_OTHER )) == null ? '' : __t) +
@@ -1099,7 +1164,7 @@ obj || (obj = {});
 var __t, __p = '', __e = _.escape, __j = Array.prototype.join;
 function print() { __p += __j.call(arguments, '') }
 with (obj) {
-__p += '<div class=\'fb-tab-pane active\' id=\'addField\'>\n  <div class=\'fb-add-field-types\'>\n    <div class=\'section\'>\n      ';
+__p += '<div class=\'fb-tab-pane\' id=\'addField\'>\n  <div class=\'fb-add-field-types\'>\n    <div class=\'section\'>\n      ';
  _.each(_.sortBy(Formbuilder.inputFields, 'order'), function(f){ ;
 __p += '\n        <a data-field-type="' +
 ((__t = ( f.field_type )) == null ? '' : __t) +
@@ -1139,11 +1204,23 @@ this["Formbuilder"]["templates"]["partials/left_side"] = function(obj) {
 obj || (obj = {});
 var __t, __p = '', __e = _.escape;
 with (obj) {
-__p += '<div class=\'fb-left\'>\n  <ul class=\'fb-tabs\'>\n    <li class=\'active\'><a data-target=\'#addField\'>Add new field</a></li>\n    <li><a data-target=\'#editField\'>Edit field</a></li>\n  </ul>\n\n  <div class=\'fb-tab-content\'>\n    ' +
+__p += '<div class=\'fb-left\'>\n  <ul class=\'fb-tabs\'>\n    <li class=\'active\'><a data-target=\'#FormProp\'>Form properties</a></li>\n    <li><a data-target=\'#addField\'>Add new field</a></li>\n    <li><a data-target=\'#editField\'>Edit field</a></li>\n  </ul>\n\n  <div class=\'fb-tab-content\'>\n    ' +
+((__t = ( Formbuilder.templates['partials/props']() )) == null ? '' : __t) +
+'\n    ' +
 ((__t = ( Formbuilder.templates['partials/add_field']() )) == null ? '' : __t) +
 '\n    ' +
 ((__t = ( Formbuilder.templates['partials/edit_field']() )) == null ? '' : __t) +
 '\n  </div>\n</div>';
+
+}
+return __p
+};
+
+this["Formbuilder"]["templates"]["partials/props"] = function(obj) {
+obj || (obj = {});
+var __t, __p = '', __e = _.escape;
+with (obj) {
+__p += '<div class=\'fb-tab-pane active\' id=\'FormProp\'>\r\n  <div class=\'fb-form-props\'>\r\n      <label>\r\n        <input class=\'form-name-input\' type=\'text\' data-rv-input=\'model.form_name\' />\r\n        Form name\r\n      </label>\r\n  </div>\r\n</div>';
 
 }
 return __p

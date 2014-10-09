@@ -81,7 +81,7 @@ class FormPropertiesView extends Backbone.View
   forceRender: ->
     @model.trigger('change')
     @parentView.saveForm()
-    
+
 class EditFieldView extends Backbone.View
   className: "edit-response-field"
 
@@ -98,10 +98,11 @@ class EditFieldView extends Backbone.View
 
   onDropboxClose: (event, ui)->
     $('.ui-autocomplete-input').change()
-  
+
   render: ->
     @$el.html(Formbuilder.templates["edit/base#{if !@model.is_input() then '_non_input' else ''}"]({rf: @model}))
     rivets.bind @$el, { model: @model }
+
     @$( "#grName" ).autocomplete({
         source: @getGroups(),
         minLength: 0,
@@ -110,7 +111,18 @@ class EditFieldView extends Backbone.View
       $(this).autocomplete 'search'
       @)
 
-    @$("#grName").attr('autocomplete', 'on');
+    @$("#grName").attr('autocomplete', 'on')
+
+    @$( "#D4W_data" ).autocomplete({
+      source: "getFieldsList",
+      minLength: 0,
+      close: @onDropboxClose
+
+    }).focus(->
+      $(this).autocomplete 'search'
+      @)
+
+    @$("#D4W_data").attr('autocomplete', 'on');
     return @
 
   remove: ->
@@ -177,7 +189,7 @@ class EditFieldView extends Backbone.View
         minLength: 0,
         close: => fn()
     }).focus(->
-      $(this).val 
+      $(this).val
       $(this).autocomplete 'search'
       @)
 
@@ -209,9 +221,9 @@ class BuilderView extends Backbone.View
     @collection.bind 'change', @handleFormUpdate, @
     @collection.bind 'destroy add reset', @hideShowNoResponseFields, @
     @collection.bind 'destroy', @ensureEditViewScrolled, @
-    
+
     @form_model = new FormbuilderModel({form_name:@form_name})
-    
+
     @render()
     @collection.reset(@bootstrapData)
     # Render any subviews (this is an easy way of extending the Formbuilder)
@@ -244,7 +256,7 @@ class BuilderView extends Backbone.View
 
     @bindWindowScrollEvent()
     @hideShowNoResponseFields()
-    
+
     return @
 
   bindWindowScrollEvent: ->
@@ -390,7 +402,7 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
     @collection.sort()
-    
+
     payload = JSON.stringify($.extend({bootstrapData: @collection.toJSON()},@form_model.toJSON()))
     if Formbuilder.options.HTTP_ENDPOINT then @doAjaxSave(payload)
     @formBuilder.trigger 'save', payload
@@ -480,6 +492,7 @@ class Formbuilder
     args = _.extend opts, {formBuilder: @}
     Formbuilder.options.HTTP_ENDPOINT = opts.url
     @mainView = new BuilderView args
+    $( document ).tooltip()
 
 window.Formbuilder = Formbuilder
 

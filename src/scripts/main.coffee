@@ -73,14 +73,14 @@ class FormPropertiesView extends Backbone.View
     'input .form-name-input' : 'forceRender'
   initialize: (options) ->
     {@parentView} = options
-    @el = $('.fb-form-props');
-    @_ensureElement();
+    @el = $('.fb-form-props')
+    @_ensureElement()
   render: ->
     rivets.bind @$el, { model: @model }
     @
   forceRender: ->
     @model.trigger('change')
-    @parentView.saveForm()
+    #@parentView.handleFormUpdate()
 
 class EditFieldView extends Backbone.View
   className: "edit-response-field"
@@ -122,7 +122,12 @@ class EditFieldView extends Backbone.View
       $(this).autocomplete 'search'
       @)
 
-    @$("#D4W_data").attr('autocomplete', 'on');
+    @$("#D4W_data").attr('autocomplete', 'on')
+
+    #damned rivets does not support arrays
+    @$el.find("#grNameDialog").each (index, element) =>
+      $(element).val(@model.attributes.field_options.options[index].tr_group)
+
     return @
 
   remove: ->
@@ -171,6 +176,8 @@ class EditFieldView extends Backbone.View
     options = _.pluck(@model.collection.models, 'attributes')
     options = _.pluck(options, 'group')
     options = _.uniq(_.compact(options))
+    options.unshift("")
+    return options
 
   triggerGroup: (e) ->
     b = $(e.currentTarget)
@@ -180,16 +187,16 @@ class EditFieldView extends Backbone.View
     i = @$el.find('.option').index($el.closest('.option'))
 
     fn = do (i, options ) -> ->
-      $('.ui-autocomplete-input').change()
       if i > -1
         options[i].tr_group = b.val()
+      $('.ui-autocomplete-input').change()
 
     b.autocomplete({
         source: @getGroups(),
         minLength: 0,
         close: => fn()
     }).focus(->
-      $(this).val
+      $(this).val ''
       $(this).autocomplete 'search'
       @)
 
@@ -235,9 +242,9 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton = @$el.find(".js-save-form")
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
-
+    
     unless !Formbuilder.options.AUTOSAVE
-      setInterval =>
+      @renew = setInterval =>
         @saveForm.call(@)
       , 5000
 
@@ -245,6 +252,7 @@ class BuilderView extends Backbone.View
       if @formSaved then undefined else Formbuilder.options.dict.UNSAVED_CHANGES
 
   reset: ->
+    
     @$responseFields.html('')
     @addAll()
 
@@ -448,6 +456,7 @@ class Formbuilder
 
     mappings:
       GROUP:          'group'
+      BIND:           'd4w_field'
       SIZE:           'field_options.size'
       UNITS:          'field_options.units'
       LABEL:          'label'
@@ -493,7 +502,10 @@ class Formbuilder
     Formbuilder.options.HTTP_ENDPOINT = opts.url
     @mainView = new BuilderView args
     $( document ).tooltip()
-
+  
+  close: ->
+    clearInterval(@mainView.renew)
+    
 window.Formbuilder = Formbuilder
 
 if module?

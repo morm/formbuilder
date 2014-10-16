@@ -196,8 +196,7 @@
     };
 
     FormPropertiesView.prototype.forceRender = function() {
-      this.model.trigger('change');
-      return this.parentView.saveForm();
+      return this.model.trigger('change');
     };
 
     return FormPropertiesView;
@@ -232,6 +231,7 @@
     };
 
     EditFieldView.prototype.render = function() {
+      var _this = this;
       this.$el.html(Formbuilder.templates["edit/base" + (!this.model.is_input() ? '_non_input' : '')]({
         rf: this.model
       }));
@@ -256,6 +256,9 @@
         return this;
       });
       this.$("#D4W_data").attr('autocomplete', 'on');
+      this.$el.find("#grNameDialog").each(function(index, element) {
+        return $(element).val(_this.model.attributes.field_options.options[index].tr_group);
+      });
       return this;
     };
 
@@ -313,7 +316,9 @@
       var options;
       options = _.pluck(this.model.collection.models, 'attributes');
       options = _.pluck(options, 'group');
-      return options = _.uniq(_.compact(options));
+      options = _.uniq(_.compact(options));
+      options.unshift("");
+      return options;
     };
 
     EditFieldView.prototype.triggerGroup = function(e) {
@@ -325,10 +330,10 @@
       i = this.$el.find('.option').index($el.closest('.option'));
       fn = (function(i, options) {
         return function() {
-          $('.ui-autocomplete-input').change();
           if (i > -1) {
-            return options[i].tr_group = b.val();
+            options[i].tr_group = b.val();
           }
+          return $('.ui-autocomplete-input').change();
         };
       })(i, options);
       b.autocomplete({
@@ -338,7 +343,7 @@
           return fn();
         }
       }).focus(function() {
-        $(this).val;
+        $(this).val('');
         $(this).autocomplete('search');
         return this;
       });
@@ -403,7 +408,7 @@
       this.saveFormButton = this.$el.find(".js-save-form");
       this.saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED);
       if (!!Formbuilder.options.AUTOSAVE) {
-        setInterval(function() {
+        this.renew = setInterval(function() {
           return _this.saveForm.call(_this);
         }, 5000);
       }
@@ -676,6 +681,7 @@
       CLEAR_FIELD_CONFIRM: false,
       mappings: {
         GROUP: 'group',
+        BIND: 'd4w_field',
         SIZE: 'field_options.size',
         UNITS: 'field_options.units',
         LABEL: 'label',
@@ -736,6 +742,10 @@
       $(document).tooltip();
     }
 
+    Formbuilder.prototype.close = function() {
+      return clearInterval(this.mainView.renew);
+    };
+
     return Formbuilder;
 
   })();
@@ -753,7 +763,7 @@
 (function() {
   Formbuilder.registerField('address', {
     order: 50,
-    view: "<div class='input-line'>\n  <span class='street'>\n    <input type='text' />\n    <label>Address</label>\n  </span>\n</div>\n\n<div class='input-line'>\n  <span class='city'>\n    <input type='text' />\n    <label>City</label>\n  </span>\n\n  <span class='state'>\n    <input type='text' />\n    <label>State / Province / Region</label>\n  </span>\n</div>\n\n<div class='input-line'>\n  <span class='zip'>\n    <input type='text' />\n    <label>Zipcode</label>\n  </span>\n\n  <span class='country'>\n    <select><option>United States</option></select>\n    <label>Country</label>\n  </span>\n</div>",
+    view: "<div class='input-line'>\n  <span class='street'>\n    <input type='text' />\n    <label>Address</label>\n  </span>\n</div>\n\n<div class='input-line'>\n  <span class='city'>\n    <input type='text' />\n    <label>City</label>\n  </span>\n\n  <span class='state'>\n    <input type='text' />\n    <label>State / Province / Region</label>\n  </span>\n</div>\n\n<div class='input-line'>\n  <span class='zip'>\n    <input type='text' />\n    <label>Zipcode</label>\n  </span>\n\n  <span class='country'>\n    <select><option>Australia</option></select>\n    <label>Country</label>\n  </span>\n</div>",
     edit: "",
     addButton: "<span class=\"symbol\"><span class=\"fa fa-home\"></span></span> Address"
   });
@@ -982,7 +992,9 @@ this["Formbuilder"]["templates"]["edit/bind_combobox"] = function(obj) {
 obj || (obj = {});
 var __t, __p = '', __e = _.escape;
 with (obj) {
-__p += '<label>\r\n<input id="D4W_data" readonly="readonly" title="D4W field binding" placeholder="D4W field binding"/>\r\n</label>';
+__p += '<label>\r\n<input id="D4W_data" readonly="readonly" title="D4W field binding" placeholder="D4W field binding" data-rv-value="model.' +
+((__t = ( Formbuilder.options.mappings.BIND)) == null ? '' : __t) +
+'"/>\r\n</label>';
 
 }
 return __p
@@ -994,7 +1006,7 @@ var __t, __p = '', __e = _.escape;
 with (obj) {
 __p += '<label>\n  <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.REQUIRED )) == null ? '' : __t) +
-'\' />\n  Required\n</label>\n<!-- label>\n  <input type=\'checkbox\' data-rv-checked=\'model.' +
+'\'/>\n  Required\n</label>\n<!-- label>\n  <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.ADMIN_ONLY )) == null ? '' : __t) +
 '\' />\n  Admin only\n</label -->';
 
@@ -1101,11 +1113,11 @@ __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
  } ;
 __p += '\n<div class=\'option\' data-rv-each-option=\'model.' +
 ((__t = ( Formbuilder.options.mappings.OPTIONS )) == null ? '' : __t) +
-'\'>\n<fieldset style="border: 1px solid #ddd; margin-bottom: 3px; padding: 3px">\n  <div style="display: inline; float: left; margin-bottom: 50px; padding: 3px">\n    <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked"/>\n  </div>\n  <div style="display: inline; padding: 3px">\n    <input type="text" data-rv-input="option:label" class=\'option-label-input\' />\n    <a class="js-add-option    ' +
+'\'>\n<fieldset style="border: 1px solid #ddd; margin-bottom: 3px; padding: 3px">\n  <div style="display: inline; float: left; margin-bottom: 40px; padding: 3px">\n    <input type="checkbox" class=\'js-default-updated\' data-rv-checked="option:checked"/>\n  </div>\n  <div style="display: inline; padding: 3px">\n    <input type="text" data-rv-input="option:label" class=\'option-label-input\' style="margin-left: 0px"/>\n    <a class="js-add-option    ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
 '" title="Add Option">   <i class=\'fa fa-plus-circle\'> </i></a>\n    <a class="js-remove-option ' +
 ((__t = ( Formbuilder.options.BUTTON_CLASS )) == null ? '' : __t) +
-'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n\n    <input id="grNameDialog" readonly="readonly" placeholder="Toggle group"/>\n  </div>\n</fieldset>\n\n</div>\n\n';
+'" title="Remove Option"><i class=\'fa fa-minus-circle\'></i></a>\n\n    <input id="grNameDialog" placeholder="Toggle group" readonly="readonly" style="margin-left: 3px; margin-top: 3px;"/>\n  </div>\n</fieldset>\n\n</div>\n\n';
  if (typeof includeOther !== 'undefined'){ ;
 __p += '\n  <label>\n    <input type=\'checkbox\' data-rv-checked=\'model.' +
 ((__t = ( Formbuilder.options.mappings.INCLUDE_OTHER )) == null ? '' : __t) +

@@ -29,7 +29,7 @@ Formbuilder.registerField 'address',
       </span>
 
       <span class='country'>
-        <select><option>United States</option></select>
+        <select><option>Australia</option></select>
         <label>Country</label>
       </span>
     </div>

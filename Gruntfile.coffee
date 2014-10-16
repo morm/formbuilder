@@ -94,7 +94,7 @@ module.exports = (grunt) ->
     cssmin:
       dist:
         files:
-          '<%= distFolder %>/formbuilder-min.css': ['<%= distFolder %>/formbuilder.css', 'bower_components/jquery-ui/themes/base/jquery-ui.css']
+          '<%= distFolder %>/formbuilder-min.css': ['bower_components/jquery-ui/themes/base/jquery-ui.css', '<%= distFolder %>/formbuilder.css']
           '<%= vendorFolder %>/css/vendor.css'   : 'bower_components/font-awesome/css/font-awesome.css'
 
     stylus:

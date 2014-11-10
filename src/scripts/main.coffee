@@ -108,21 +108,50 @@ class EditFieldView extends Backbone.View
         minLength: 0,
         close: @onDropboxClose
     }).focus(->
+      $(this).val ''
       $(this).autocomplete 'search'
       @)
 
     @$("#grName").attr('autocomplete', 'on')
 
-    @$( "#D4W_data" ).autocomplete({
-      source: "getFieldsList",
-      minLength: 0,
-      close: @onDropboxClose
+    $.ajax {
+      type: "GET",
+      url: "getFieldsList",
+      dataType: "json",
+      data: {field_type: @model.get(Formbuilder.options.mappings.FIELD_TYPE)},
+      contentType: "application/json; charset=utf-8",
+      success: (data)=>
+        partial = (onChangeFn, data)->
+          (event, ui) -> onChangeFn(data, event, ui)
 
-    }).focus(->
-      $(this).autocomplete 'search'
-      @)
+        onChange = (data, event, ui)=>
+          options = []
+          if @model.get(Formbuilder.options.mappings.BIND) != event.target.value and event.target.value!=''
+            if obj = $.grep(data, (item)->item.value==event.target.value)[0]?.options
+              options = ({label: option, checked: false} for option in obj)
 
-    @$("#D4W_data").attr('autocomplete', 'on')
+          @model.set Formbuilder.options.mappings.OPTIONS, options
+          @model.trigger "change:#{Formbuilder.options.mappings.OPTIONS}"
+
+          $('.ui-autocomplete-input').change()
+          $(event.target).blur()
+
+
+          @forceRender()
+
+        @$( "#D4W_data" ).autocomplete({
+          source:    data,
+          minLength: 0,
+          close: partial(onChange, data)
+        }).focus(->
+          $(this).val ''
+          $(this).autocomplete 'search'
+          @)
+
+        @$("#D4W_data").attr('autocomplete', 'on')
+      error: (XMLHttpRequest, textStatus, errorThrown)->
+         alert(textStatus);
+    }
 
     #damned rivets does not support arrays
     @$el.find("#grNameDialog").each (index, element) =>
@@ -138,9 +167,9 @@ class EditFieldView extends Backbone.View
 
   # @todo this should really be on the model, not the view
   addOption: (e) ->
-    $el = $(e.currentTarget)
-    i = @$el.find('.option').index($el.closest('.option'))
-    options = @model.get(Formbuilder.options.mappings.OPTIONS) || []
+    $el       = $(e.currentTarget)
+    i         = @$el.find('.option').index($el.closest('.option'))
+    options   = @model.get(Formbuilder.options.mappings.OPTIONS) || []
     newOption = {label: "", checked: false}
 
     if i > -1
@@ -153,10 +182,12 @@ class EditFieldView extends Backbone.View
     @forceRender()
 
   removeOption: (e) ->
-    $el = $(e.currentTarget)
-    index = @$el.find(".js-remove-option").index($el)
+    $el     = $(e.currentTarget)
+    index   = @$el.find(".js-remove-option").index($el)
     options = @model.get Formbuilder.options.mappings.OPTIONS
+
     options.splice index, 1
+
     @model.set Formbuilder.options.mappings.OPTIONS, options
     @model.trigger "change:#{Formbuilder.options.mappings.OPTIONS}"
     @forceRender()
@@ -176,7 +207,7 @@ class EditFieldView extends Backbone.View
     options = _.pluck(@model.collection.models, 'attributes')
     options = _.pluck(options, 'group')
     options = _.uniq(_.compact(options))
-    options.unshift("")
+    #options.unshift("")
     return options
 
   triggerGroup: (e) ->
@@ -242,7 +273,7 @@ class BuilderView extends Backbone.View
     @formSaved = true
     @saveFormButton = @$el.find(".js-save-form")
     @saveFormButton.attr('disabled', true).text(Formbuilder.options.dict.ALL_CHANGES_SAVED)
-    
+
     unless !Formbuilder.options.AUTOSAVE
       @renew = setInterval =>
         @saveForm.call(@)
@@ -252,7 +283,7 @@ class BuilderView extends Backbone.View
       if @formSaved then undefined else Formbuilder.options.dict.UNSAVED_CHANGES
 
   reset: ->
-    
+
     @$responseFields.html('')
     @addAll()
 
@@ -502,10 +533,10 @@ class Formbuilder
     Formbuilder.options.HTTP_ENDPOINT = opts.url
     @mainView = new BuilderView args
     $( document ).tooltip()
-  
+
   close: ->
     clearInterval(@mainView.renew)
-    
+
 window.Formbuilder = Formbuilder
 
 if module?

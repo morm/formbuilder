@@ -243,19 +243,68 @@
         minLength: 0,
         close: this.onDropboxClose
       }).focus(function() {
+        $(this).val('');
         $(this).autocomplete('search');
         return this;
       });
       this.$("#grName").attr('autocomplete', 'on');
-      this.$("#D4W_data").autocomplete({
-        source: "getFieldsList",
-        minLength: 0,
-        close: this.onDropboxClose
-      }).focus(function() {
-        $(this).autocomplete('search');
-        return this;
+      $.ajax({
+        type: "GET",
+        url: "getFieldsList",
+        dataType: "json",
+        data: {
+          field_type: this.model.get(Formbuilder.options.mappings.FIELD_TYPE)
+        },
+        contentType: "application/json; charset=utf-8",
+        success: function(data) {
+          var onChange, partial;
+          partial = function(onChangeFn, data) {
+            return function(event, ui) {
+              return onChangeFn(data, event, ui);
+            };
+          };
+          onChange = function(data, event, ui) {
+            var obj, option, options, _ref5;
+            options = [];
+            if (_this.model.get(Formbuilder.options.mappings.BIND) !== event.target.value && event.target.value !== '') {
+              if (obj = (_ref5 = $.grep(data, function(item) {
+                return item.value === event.target.value;
+              })[0]) != null ? _ref5.options : void 0) {
+                options = (function() {
+                  var _i, _len, _results;
+                  _results = [];
+                  for (_i = 0, _len = obj.length; _i < _len; _i++) {
+                    option = obj[_i];
+                    _results.push({
+                      label: option,
+                      checked: false
+                    });
+                  }
+                  return _results;
+                })();
+              }
+            }
+            _this.model.set(Formbuilder.options.mappings.OPTIONS, options);
+            _this.model.trigger("change:" + Formbuilder.options.mappings.OPTIONS);
+            $('.ui-autocomplete-input').change();
+            $(event.target).blur();
+            return _this.forceRender();
+          };
+          _this.$("#D4W_data").autocomplete({
+            source: data,
+            minLength: 0,
+            close: partial(onChange, data)
+          }).focus(function() {
+            $(this).val('');
+            $(this).autocomplete('search');
+            return this;
+          });
+          return _this.$("#D4W_data").attr('autocomplete', 'on');
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+          return alert(textStatus);
+        }
       });
-      this.$("#D4W_data").attr('autocomplete', 'on');
       this.$el.find("#grNameDialog").each(function(index, element) {
         return $(element).val(_this.model.attributes.field_options.options[index].tr_group);
       });
@@ -317,7 +366,6 @@
       options = _.pluck(this.model.collection.models, 'attributes');
       options = _.pluck(options, 'group');
       options = _.uniq(_.compact(options));
-      options.unshift("");
       return options;
     };
 

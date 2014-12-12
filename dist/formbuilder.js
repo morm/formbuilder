@@ -595,7 +595,6 @@
     BuilderView.prototype.createField = function(attrs, options) {
       var rf;
       rf = this.collection.create(attrs, options);
-      this.createAndShowEditView(rf);
       return this.handleFormUpdate();
     };
 

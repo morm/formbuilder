@@ -390,7 +390,7 @@ class BuilderView extends Backbone.View
 
   createField: (attrs, options) ->
     rf = @collection.create attrs, options
-    @createAndShowEditView(rf)
+    #@createAndShowEditView(rf)
     @handleFormUpdate()
 
   createAndShowEditView: (model) ->

@@ -50,7 +50,28 @@
         all: {
           files: {
             '<%= distFolder %>/formbuilder.js': '<%= compiledFolder %>/*.js',
-            '<%= vendorFolder %>/js/vendor.js': ['bower_components/ie8-node-enum/index.js', 'bower_components/jquery/jquery.js', 'bower_components/jquery-ui/ui/jquery.ui.core.js', 'bower_components/jquery-ui/ui/jquery.ui.widget.js', 'bower_components/jquery-ui/ui/jquery.ui.mouse.js', 'bower_components/jquery-ui/ui/jquery.ui.draggable.js', 'bower_components/jquery-ui/ui/jquery.ui.droppable.js', 'bower_components/jquery-ui/ui/jquery.ui.sortable.js', 'bower_components/jquery-ui/ui/jquery.ui.position.js ', 'bower_components/jquery-ui/ui/jquery.ui.menu.js', 'bower_components/jquery-ui/ui/jquery.ui.autocomplete.js', 'bower_components/jquery-ui/ui/jquery.ui.button.js', 'bower_components/jquery-ui/ui/jquery.ui.mouse.js', 'bower_components/jquery-ui/ui/jquery.ui.resizable.js', 'bower_components/jquery-ui/ui/jquery.ui.dialog.js', 'bower_components/jquery.scrollWindowTo/index.js', 'bower_components/underscore/underscore-min.js', 'bower_components/underscore.mixin.deepExtend/index.js', 'bower_components/rivets/dist/rivets.js', 'bower_components/backbone/backbone.js', 'bower_components/backbone-deep-model/src/deep-model.js']
+            '<%= vendorFolder %>/js/vendor.js': [
+                                                 'bower_components/ie8-node-enum/index.js', 
+                                                 'bower_components/jquery/jquery.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.core.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.widget.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.mouse.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.draggable.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.droppable.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.sortable.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.position.js ', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.menu.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.autocomplete.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.button.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.mouse.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.resizable.js', 
+                                                 'bower_components/jquery-ui/ui/jquery.ui.dialog.js', 
+                                                 'bower_components/jquery.scrollWindowTo/index.js', 
+                                                 'bower_components/underscore/underscore-min.js', 
+                                                 'bower_components/underscore.mixin.deepExtend/index.js', 
+                                                 'bower_components/rivets/dist/rivets.js', 
+                                                 'bower_components/backbone/backbone.js', 
+                                                 'bower_components/backbone-deep-model/src/deep-model.js']
           }
         },
         mobile_friendly: {

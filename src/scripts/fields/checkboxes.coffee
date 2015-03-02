@@ -35,10 +35,12 @@ Formbuilder.registerField 'checkboxes',
   defaultAttributes: (attrs) ->
     attrs.field_options.options = [
       label: "",
-      checked: false
+      checked: false,
+      key: _.uniqueId('option_')
     ,
       label: "",
-      checked: false
+      checked: false,
+      key: _.uniqueId('option_')
     ]
 
     attrs

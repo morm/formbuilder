@@ -62,9 +62,10 @@ class ViewFieldView extends Backbone.View
         cb()
 
   duplicate: ->
-    attrs = _.clone(@model.attributes)
+    attrs = jQuery.extend(true, {}, @model.attributes);
     delete attrs['id']
     attrs['label'] += ' Copy'
+    option['key'] = _.uniqueId('option_') for option in attrs.field_options.options
     @parentView.createField attrs, { position: @model.indexInDOM() + 1 }
 
 class FormPropertiesView extends Backbone.View
@@ -128,7 +129,7 @@ class EditFieldView extends Backbone.View
           options = []
           if @model.get(Formbuilder.options.mappings.BIND) != event.target.value and event.target.value!=''
             if obj = $.grep(data, (item)->item.value==event.target.value)[0]?.options
-              options = ({label: option, checked: false} for option in obj)
+              (options.push({label: val, checked: false, key: key}) for key, val of option for option in obj)
 
           @model.set Formbuilder.options.mappings.OPTIONS, options
           @model.trigger "change:#{Formbuilder.options.mappings.OPTIONS}"
@@ -170,7 +171,7 @@ class EditFieldView extends Backbone.View
     $el       = $(e.currentTarget)
     i         = @$el.find('.option').index($el.closest('.option'))
     options   = @model.get(Formbuilder.options.mappings.OPTIONS) || []
-    newOption = {label: "", checked: false}
+    newOption = {label: "", checked: false, key: _.uniqueId('option_')}
 
     if i > -1
       options.splice(i + 1, 0, newOption)
